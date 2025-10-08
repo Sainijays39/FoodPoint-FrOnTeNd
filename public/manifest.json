@@ -1,0 +1,21 @@
+{
+  "name": "FoodPoint Cafe",
+  "short_name": "FoodPoint",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6600",
+  "icons": [
+    {
+      "src": "/logo1.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "serviceworker": {
+    "src": "/service-worker.js",
+    "scope": "/",
+    "type": "module",
+    "update_via_cache": "none"
+  }
+}

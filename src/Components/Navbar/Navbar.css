@@ -1,0 +1,188 @@
+.navbar{
+    padding: 20px 0px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    position: sticky;   
+    flex-shrink: 0;
+
+}
+
+.navbar.logo{
+    width: 150px;
+}
+
+.navbar-menu{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 20px;
+    list-style: none;
+    font-size: 18px;
+    font-weight: 500;
+    color: #49557e;
+    cursor: pointer;
+}
+
+.navbar-right{
+    display: flex;
+    gap: 40px;
+    align-items: center;
+   
+}
+
+.navbar button{
+    background: transparent;
+    font-size: 16px;
+    color: #49557e;
+    border: 1px solid tomato;
+    padding: 10px 30px;
+    border-radius: 50px;
+    cursor: pointer;
+
+}
+
+.navbar button:hover{
+    background-color: tomato;
+    color: white;
+    transition: all 0.3s ease-in-out;
+}
+
+.navbar .active{
+    padding-bottom: 2px ;
+    border-bottom: 2px solid #49557e;
+}
+
+.navbar-search-icon{
+    position: relative;
+}
+
+.navbar-search-icon .dot{
+    position: absolute;
+    min-width: 10px;
+    min-height: 10px;
+    background-color: tomato;
+    border-radius: 5px;
+    top: -8px;
+    right: -8px;
+}
+
+.navbar-profile{
+    position: relative;
+}
+.navbar-profile-menu{
+    position: absolute;
+    right: 0;
+    background-color: white;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    width: 150px;
+    display: none;
+    z-index: 1;
+}
+.navbar-profile:hover .navbar-profile-menu{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: white;
+    padding: 12px 25px;
+    border-radius: 4px;
+    border: 1px solid tomato;
+    outline: 2px solid white;
+    cursor: pointer;
+    list-style: none;
+
+}
+.navbar-profile-menu li{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    color: #49557e;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.navbar-profile img{
+    width: 30px;
+    cursor: pointer;
+}
+
+.navbar-profile-menu li:hover{
+    color: tomato;
+    transition: all 0.3s ease-in-out;
+}
+
+
+
+@media (max-width: 1050px) {
+    .navbar .logo{
+        width: 140px;
+
+    }
+    .navbar-menu{
+        font-size: 17px;
+        gap: 20px;
+    }
+    .navbar-right{
+        gap: 30px;
+    }
+    .navbar-right img{
+        width: 22px;
+    }
+    .navbar-right button{
+        padding: 8px 25px;
+        
+    }
+}
+
+@media (max-width: 900px) {
+    .navbar .logo{
+        width: 120px;
+
+    }
+    .navbar-menu{
+        font-size: 15px;
+        gap: 16px;
+    }
+    .navbar-right{
+        gap: 20px;
+    }
+    .navbar-right img{
+        width: 20px;
+    }
+    .navbar-right button{
+        padding: 7px 20px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    
+    .navbar-menu{
+        display: none;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .navbar-right{
+        gap: 10px;
+    }
+    .navbar .logo{
+        width: 100px;
+        
+    }
+} 
+
+@media (min-width:344)
+{
+    .navbar-menu{
+        display:none;
+    }
+}
+
+
+

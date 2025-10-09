@@ -11,7 +11,8 @@ import Home from './pages/home/Home'
 import PlaceOrder from './pages/PlaceOrder/PlaceOrder'
 import Testimony from './Components/Testimony/Testimony'
 import LoginPopup from './Components/LoginPopUP/LoginPopUp'
-import MyOrders from './pages/myorders/myorders'
+import MyOrders from "./pages/MyOrders/MyOrders";
+
 
 
 

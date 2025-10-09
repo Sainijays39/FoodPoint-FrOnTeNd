@@ -95,7 +95,7 @@ const PlaceOrder = () => {
         currency: "INR",
         name: "Food Point",
         description: "Test Order",
-        order_id: razorpay_order_id,             // optional: you can use Razorpay orderId from backend
+        order_id: razorpayOrderId, // optional: you can use Razorpay orderId from backend
         handler: async function (res) {
           // 3️⃣ On payment success, update payment status in backend
           try {

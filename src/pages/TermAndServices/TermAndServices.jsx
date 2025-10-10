@@ -1,5 +1,5 @@
 import React from 'react';
-import './Term&Services.css'; 
+import './TermAndServices.css'; 
 import { Link } from 'react-router-dom';
 
 const TermsOfService = () => {

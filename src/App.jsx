@@ -7,7 +7,8 @@ import './main.css'
 import { Route, Routes } from 'react-router-dom'
 import Cart from './pages/Cart/Cart'
 import Home from './pages/home/Home'
-
+import PrivacyPolicy from './pages/PrivacyPolicy/PrivacyPolicy'
+import TermsOfService from './pages/termServices/Term&Services'
 import PlaceOrder from './pages/PlaceOrder/PlaceOrder'
 import Testimony from './Components/Testimony/Testimony'
 import LoginPopup from './Components/LoginPopUP/LoginPopUp'
@@ -30,6 +31,8 @@ const App = () => {
           <Route path='/cart' element={<Cart />} />
           <Route path='/placeorder' element={<PlaceOrder />} />
           <Route path='/myorders' element={<MyOrders />} />
+          <Route path='/privacypolicy' element={<PrivacyPolicy />} />
+          <Route path='/terms' element={<TermsOfService />} />
         </Routes> 
        
        <footer className="footer"><Footer /> </footer> 

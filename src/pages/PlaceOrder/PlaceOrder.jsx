@@ -87,7 +87,6 @@ const PlaceOrder = () => {
       });
 
       const { razorpayOrderId, amount } = res.data; // _id = order id in your DB
-      console.log(razorpayOrderId, amount);
       // 2️⃣ Open Razorpay checkout
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,

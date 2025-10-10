@@ -5,6 +5,7 @@ import { assets } from '../../assets/assets'
 import { useEffect } from 'react'
 import { StoreContext } from '../../context/StoreContext'
 import axios from 'axios'
+import { Link } from 'react-router-dom'
 
 const LoginPopup = ({ setShowLogin }) => {
 
@@ -88,7 +89,7 @@ const LoginPopup = ({ setShowLogin }) => {
                 <button type='submit'>{currState === "Sign Up" ? "Create Your FoodPoint Account" : "Login Into FoodPoint"}</button>
                 <div className="login-popup-condition">
                     <input type="checkbox" required />
-                    <p>I agree to the <span className='text-tomato'>Terms of Service</span> and <span className='text-tomato'>Privacy Policy</span>.</p>
+                    <p>I agree to the <span className='text-tomato'><Link to="/terms">Terms of Service</Link></span> and <span className='text-tomato'><Link to="/privacypolicy">Privacy Policy</Link>.</span></p>
                 </div>
                 {
                     currState === "Login"

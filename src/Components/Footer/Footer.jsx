@@ -65,6 +65,7 @@ const Footer = () => {
                                 className="text-gray-300 hover:text-primary transition-micro"
                             >Menu</Link></li>
                             <li><Link to="/myorders" className="text-gray-300 hover:text-primary transition-micro">Track Order </Link></li>
+                            <li><Link to="/CancellationRefund" className="text-gray-300 hover:text-primary transition-micro">Cancellation & Refund Policy</Link></li>
 
 
                         </ul>

@@ -9,6 +9,7 @@ import Cart from './pages/Cart/Cart'
 import Home from './pages/home/Home'
 import PrivacyPolicy from './pages/PrivacyPolicy/PrivacyPolicy'
 import TermsOfService from './pages/TermAndServices/TermAndServices'
+import CancellationRefund from './pages/Cancelation/Cancelation'
 import PlaceOrder from './pages/PlaceOrder/PlaceOrder'
 import Testimony from './Components/Testimony/Testimony'
 import LoginPopup from './Components/LoginPopUP/LoginPopUp'
@@ -33,6 +34,7 @@ const App = () => {
           <Route path='/myorders' element={<MyOrders />} />
           <Route path='/privacypolicy' element={<PrivacyPolicy />} />
           <Route path='/terms' element={<TermsOfService />} />
+          <Route path="/CancellationRefund" element={<CancellationRefund />} />
         </Routes> 
        
        <footer className="footer"><Footer /> </footer> 

@@ -12,6 +12,8 @@ const PlaceOrder = () => {
   const { getTotalCartAmount, token, food_list, cartItems, url } = useContext(StoreContext);
   const [loading, setLoading] = useState(false);
   const [orderResponse, setOrderResponse] = useState(null);
+  const [canOrder, setCanOrder] = useState(true); 
+  const [timeLeft, setTimeLeft] = useState("");
   const navigate = useNavigate();
 
   const [data, setData] = useState({
@@ -31,9 +33,66 @@ const PlaceOrder = () => {
     setData(Data => ({ ...Data, [name]: value }))
   }
 
+  // ⏰ Check if current time is within 10 AM - 10 PM
+  const isWithinOrderTime = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    return hour >= 10 && hour < 22;
+  }
+
+  // ✅ Fetch admin toggle and check time
+  useEffect(() => {
+    const checkOrderStatus = async () => {
+      try {
+        const res = await axios.get(`${url}/api/site/status`);
+        const isAdminActive = res.data.isActive;
+        setCanOrder(isAdminActive && isWithinOrderTime());
+      } catch (err) {
+        console.error(err);
+        setCanOrder(false); // fallback: disable if error
+      }
+    }
+
+    checkOrderStatus();
+    const interval = setInterval(checkOrderStatus, 10000); // recheck every 10 seconds
+    return () => clearInterval(interval);
+  }, [url]);
+
+  // Countdown timer
+  const calculateTimeLeft = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    let target = new Date();
+
+    if (!canOrder) {
+      // Closed → time until next 10 AM
+      if (hour >= 22) target.setDate(target.getDate() + 1);
+      target.setHours(10, 0, 0, 0);
+    } else {
+      // Open → time until 10 PM
+      target.setHours(22, 0, 0, 0);
+    }
+
+    const diff = target - now;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    return `${hours}h ${minutes}m`;
+  };
+
+   useEffect(() => {
+    const updateCountdown = () => setTimeLeft(calculateTimeLeft());
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000);
+    return () => clearInterval(interval);
+  }, [canOrder]);
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
+
+    if (!isWithinOrderTime()) {
+      return alert("⏰ Orders can only be placed between 10:00 AM and 10:00 PM.");
+    }
 
     if (cartItems.length === 0) return alert("Your cart is empty!");
 
@@ -193,7 +252,21 @@ const PlaceOrder = () => {
               <p>₹{getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 0}</p>
             </div>
           </div>
-          <button type='submit' disabled={loading}>{loading ? "Placing Order..." : "Place Your Order"}</button>
+          <button type='submit' disabled={loading || !canOrder}>
+            {loading
+              ? "Placing Order..."
+              : !canOrder
+              ? "Orders Closed"
+              : "Place Your Order"}
+          </button>
+          {/* Countdown Timer */}
+          {!canOrder && <p style={{ color: "red", marginTop: "10px" }}>
+            Orders are closed. ⏰ Will open Soon!
+          </p>}
+          {canOrder && <p style={{ color: "green", marginTop: "10px" }}>
+            Orders are open! Closing in: {timeLeft}
+          </p>}
+
         </div>
         {orderResponse && (
           <div className="order-confirmation">

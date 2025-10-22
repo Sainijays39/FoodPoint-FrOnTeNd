@@ -1,20 +1,43 @@
 import React, { useContext, useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom' // 🆕 CHANGED
 import './PlaceOrder.css'
 import './../../main.css'
 import { assets } from '../../assets/assets'
 import { StoreContext } from '../../context/StoreContext'
 import axios from 'axios';
-
+import { jwtDecode } from "jwt-decode";
 
 const PlaceOrder = () => {
+
+  const Token = localStorage.getItem("token");
+  if (!Token) return alert("Please login first!");
+
+  const decoded = jwtDecode(Token);
+  const userId = decoded.id || decoded.userId || decoded._id; // depends on backend token payload
+  const user = { _id: userId };
 
   const { getTotalCartAmount, token, food_list, cartItems, url } = useContext(StoreContext);
   const [loading, setLoading] = useState(false);
   const [orderResponse, setOrderResponse] = useState(null);
-  const [canOrder, setCanOrder] = useState(true); 
+  const [canOrder, setCanOrder] = useState(true);
   const [timeLeft, setTimeLeft] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("online");
+
+
   const navigate = useNavigate();
+  const location = useLocation(); // 🆕 CHANGED (to receive data from Cart)
+  const { state } = location;
+  const cartData = state?.cartItems || [];
+  const baseAmount = state?.totalAmount || getTotalCartAmount();
+
+  // 🆕 CHANGED - delivery calculation states
+  const [distance, setDistance] = useState(0);
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
+  const [deliveryError, setDeliveryError] = useState("");
+
+  // café’s coordinates
+  const CAFE_LAT = 28.242399;
+  const CAFE_LON = 75.076113;
 
   const [data, setData] = useState({
     firstName: "",
@@ -54,7 +77,7 @@ const PlaceOrder = () => {
     }
 
     checkOrderStatus();
-    const interval = setInterval(checkOrderStatus, 10000); // recheck every 10 seconds
+    const interval = setInterval(checkOrderStatus, 10000);
     return () => clearInterval(interval);
   }, [url]);
 
@@ -65,30 +88,84 @@ const PlaceOrder = () => {
     let target = new Date();
 
     if (!canOrder) {
-      // Closed → time until next 10 AM
       if (hour >= 22) target.setDate(target.getDate() + 1);
       target.setHours(10, 0, 0, 0);
     } else {
-      // Open → time until 10 PM
       target.setHours(22, 0, 0, 0);
     }
 
     const diff = target - now;
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
     return `${hours}h ${minutes}m`;
   };
 
-   useEffect(() => {
+  useEffect(() => {
     const updateCountdown = () => setTimeLeft(calculateTimeLeft());
     updateCountdown();
     const interval = setInterval(updateCountdown, 60000);
     return () => clearInterval(interval);
   }, [canOrder]);
 
+  // 🆕 CHANGED: Get user’s current location & compute delivery distance
+  useEffect(() => {
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+      const toRad = (value) => (value * Math.PI) / 180;
+      const R = 6371; // radius of Earth in km
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const userLat = pos.coords.latitude;
+          const userLon = pos.coords.longitude;
+          const dist = calculateDistance(CAFE_LAT, CAFE_LON, userLat, userLon);
+          setDistance(dist);
+
+          if (dist > 10) {
+            setDeliveryError("❌ Sorry, delivery is not available in your location (beyond 10 km).");
+            setCanOrder(false);
+          } else if (dist > 5) {
+            setDeliveryCharge((dist - 5) * 15); // ₹15 per km after 5 km
+          } else {
+            setDeliveryCharge(0);
+          }
+        },
+        (err) => {
+          console.error("Location access denied:", err);
+          setDeliveryError("Unable to access your location. Please enable GPS to continue.");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      setDeliveryError("Geolocation not supported by your browser.");
+    }
+  }, []);
+
+  // 🆕 CHANGED - adjusted total with delivery
+  const finalAmount = baseAmount + deliveryCharge;
+
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
+
+    if (!distance || deliveryError) {
+      return alert("📍 Please enable location access to proceed with your order.");
+    }
+
+
+    if (distance > 10) {
+      return alert("Delivery not available beyond 10 km radius!");
+    }
 
     if (!isWithinOrderTime()) {
       return alert("⏰ Orders can only be placed between 10:00 AM and 10:00 PM.");
@@ -96,14 +173,12 @@ const PlaceOrder = () => {
 
     if (cartItems.length === 0) return alert("Your cart is empty!");
 
-
     const orderPayload = {
-      items: Object.entries(cartItems)
+      userId: user._id,           // REQUIRED
+      items: cartData.length ? cartData : Object.entries(cartItems)
         .filter(([cartKey, qty]) => {
           if (!qty || qty <= 0) return false;
-
           const [id, size] = (cartKey || "").split("_");
-          // Reject if id is missing, empty, "undefined", or not found in food_list
           const isValidId = id && id !== "undefined" && food_list.some(p => String(p._id) === String(id));
           return isValidId;
         })
@@ -111,7 +186,6 @@ const PlaceOrder = () => {
           const [id, size] = (cartKey || "").split("_");
           const product = food_list.find(p => String(p._id) === String(id));
           const selectedPrice = product?.sizes?.[size] || product?.price || 0;
-
           return {
             id,
             name: product?.name || "Unknown",
@@ -121,9 +195,9 @@ const PlaceOrder = () => {
             price: selectedPrice,
           };
         }),
-
-
-      amount: getTotalCartAmount(), // convert to paise for Razorpay
+      amount: finalAmount,          // must be number
+      deliveryCharge: deliveryCharge || 0,
+      distance: distance || 0,
       address: {
         name: data.firstName + " " + data.lastName,
         street: data.street,
@@ -131,13 +205,30 @@ const PlaceOrder = () => {
         state: data.state,
         zipcode: data.zipcode,
         phone: data.phone
-      }
+      },
+      payment: false,
+      paymentMethod: "COD"
     };
+
 
     try {
       setLoading(true);
 
-      // 1️⃣ Create order in backend and get Razorpay orderId
+      if (paymentMethod === "cod") {
+
+        const res = await axios.post(`${url}/api/order/create-cod-order`, orderPayload, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        });
+        if (res.data.success) {
+          alert("Order placed successfully (Cash on Delivery)");
+          navigate("/myorders");
+        }
+        return;
+      }
+
       const res = await axios.post(`${url}/api/order/create-order`, orderPayload, {
         headers: {
           "Content-Type": "application/json",
@@ -145,30 +236,23 @@ const PlaceOrder = () => {
         }
       });
 
-      const { razorpayOrderId, amount } = res.data; // _id = order id in your DB
-      // 2️⃣ Open Razorpay checkout
+      const { razorpayOrderId, amount } = res.data;
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: amount,
+        amount,
         currency: "INR",
         name: "Food Point",
-        description: "Test Order",
-        order_id: razorpayOrderId, // optional: you can use Razorpay orderId from backend
+        description: "Order Payment",
+        order_id: razorpayOrderId,
         handler: async function (res) {
-          // 3️⃣ On payment success, update payment status in backend
           try {
             const verifyRes = await axios.post(`${url}/api/order/verify-payment`, {
               razorpay_order_id: res.razorpay_order_id,
               razorpay_payment_id: res.razorpay_payment_id,
               razorpay_signature: res.razorpay_signature
-            },
-              {
-
-                headers: { Authorization: `Bearer ${token}` }
-              }
-            );
-
-
+            }, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
 
             if (verifyRes.data.success) {
               alert("Payment Successful! Order Completed.");
@@ -183,7 +267,6 @@ const PlaceOrder = () => {
             alert("Error verifying payment.");
           }
         },
-
         prefill: {
           name: `${data.firstName} ${data.lastName}` || "Test User",
           email: data.email || "test@example.com",
@@ -191,8 +274,6 @@ const PlaceOrder = () => {
         },
         theme: { color: "#F37254" }
       };
-
-
 
       const rzp = new window.Razorpay(options);
       rzp.open();
@@ -204,7 +285,6 @@ const PlaceOrder = () => {
     }
   };
 
-
   useEffect(() => {
     if (!token) {
       navigate('/cart')
@@ -212,7 +292,6 @@ const PlaceOrder = () => {
       navigate('/cart')
     }
   }, [token])
-
 
   return (
     <form className="place-order" onSubmit={handlePlaceOrder}>
@@ -233,41 +312,62 @@ const PlaceOrder = () => {
         </div>
         <input type="text" required name='phone' onChange={onChangeHandler} value={data.phone} placeholder='Phone' />
       </div>
+
       <div className="place-order-right">
         <div className="cart-total">
           <h2 className='main-title'>Cart Totals</h2>
           <div>
             <div className="cart-total-details">
               <p>Subtotal</p>
-              <p>₹{getTotalCartAmount()}</p>
+              <p>₹{baseAmount}</p>
             </div>
             <hr />
             <div className="cart-total-details">
               <p>Delivery Charges</p>
-              <p>₹{getTotalCartAmount() === 0 ? 0 : 0}</p>
+              <p>₹{deliveryCharge.toFixed(2)}</p>
             </div>
             <hr />
             <div className="cart-total-details">
               <p>Total</p>
-              <p>₹{getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 0}</p>
+              <p>₹{finalAmount.toFixed(2)}</p>
             </div>
           </div>
-          <button type='submit' disabled={loading || !canOrder}>
+          {distance > 0 && (
+            <p style={{ fontSize: "14px", color: "gray" }}>
+              📍 Distance from café: {distance.toFixed(2)} km
+            </p>
+          )}
+          {deliveryError && <p style={{ color: "red" }}>{deliveryError}</p>}
+
+          <hr />
+          <div className="payment-method">
+            <h4>Payment Method</h4>
+            <label>
+              <input type="radio" value="online" checked={paymentMethod === "online"} onChange={() => setPaymentMethod("online")} />
+              Online Payment (Razorpay)
+            </label>
+            <label>
+              <input type="radio" value="cod" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} />
+              Cash on Delivery
+            </label>
+          </div>
+
+          <button type='submit' disabled={loading || !distance || deliveryError ||!canOrder}>
             {loading
               ? "Placing Order..."
               : !canOrder
-              ? "Orders Closed"
-              : "Place Your Order"}
+                ? "Orders Closed"
+                : "Place Your Order"}
           </button>
-          {/* Countdown Timer */}
+
           {!canOrder && <p style={{ color: "red", marginTop: "10px" }}>
             Orders are closed. ⏰ Will open Soon!
           </p>}
           {canOrder && <p style={{ color: "green", marginTop: "10px" }}>
             Orders are open! Closing in: {timeLeft}
           </p>}
-
         </div>
+
         {orderResponse && (
           <div className="order-confirmation">
             <h4>Order Confirmation:</h4>
@@ -276,7 +376,6 @@ const PlaceOrder = () => {
         )}
       </div>
     </form>
-
   )
 }
 

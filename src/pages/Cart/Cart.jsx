@@ -42,7 +42,7 @@ const Cart = () => {
                   <p>₹{price * cartItems[cartKey]}</p>
                   <p onClick={() => removeFromCart(cartKey)} className='cross'>X</p>
                 </div>
-             
+
                 <hr />
               </div>
             );
@@ -61,9 +61,10 @@ const Cart = () => {
             </div>
             <hr />
             <div className="cart-total-details">
-              <p>Delivery Charges</p>
-              <p>₹{getTotalCartAmount() === 0 ? 0 : 0}</p>
+              <p>Delivery Charges (calculated at checkout)</p>
+              <p>₹0</p>
             </div>
+
             <hr />
             <div className="cart-total-details">
               <p>Total</p>

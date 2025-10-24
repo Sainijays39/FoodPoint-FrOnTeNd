@@ -206,6 +206,10 @@ const PlaceOrder = () => {
         zipcode: data.zipcode,
         phone: data.phone
       },
+      userLocation: {
+        latitude: userLat,
+        longitude: userLon
+      },
       payment: false,
       paymentMethod: "COD"
     };

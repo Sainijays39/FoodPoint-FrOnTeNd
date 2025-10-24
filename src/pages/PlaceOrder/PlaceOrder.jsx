@@ -281,7 +281,7 @@ const PlaceOrder = () => {
           contact: data.phone || "9999999999"
         },
         theme: { color: "#F37254" },
-        methods: {
+        method: {
           netbanking: true,
           card: true,
           upi: true,

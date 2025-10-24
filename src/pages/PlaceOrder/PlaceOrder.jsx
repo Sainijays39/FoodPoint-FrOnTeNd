@@ -22,6 +22,8 @@ const PlaceOrder = () => {
   const [canOrder, setCanOrder] = useState(true);
   const [timeLeft, setTimeLeft] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("online");
+  const [userLat, setUserLat] = useState(null);
+  const [userLon, setUserLon] = useState(null);
 
 
   const navigate = useNavigate();
@@ -129,6 +131,8 @@ const PlaceOrder = () => {
         (pos) => {
           const userLat = pos.coords.latitude;
           const userLon = pos.coords.longitude;
+          setUserLat(userLat);
+          setUserLon(userLon);
           const dist = calculateDistance(CAFE_LAT, CAFE_LON, userLat, userLon);
           setDistance(dist);
 
@@ -208,7 +212,7 @@ const PlaceOrder = () => {
       },
       userLocation: {
         latitude: userLat,
-        longitude: userLon
+        longitude: userLon,
       },
       payment: false,
       paymentMethod: "COD"
@@ -356,7 +360,7 @@ const PlaceOrder = () => {
             </label>
           </div>
 
-          <button type='submit' disabled={loading || !distance || deliveryError ||!canOrder}>
+          <button type='submit' disabled={loading || !distance || deliveryError || !canOrder}>
             {loading
               ? "Placing Order..."
               : !canOrder

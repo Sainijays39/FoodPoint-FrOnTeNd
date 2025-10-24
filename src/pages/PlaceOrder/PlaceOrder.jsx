@@ -280,7 +280,13 @@ const PlaceOrder = () => {
           email: data.email || "test@example.com",
           contact: data.phone || "9999999999"
         },
-        theme: { color: "#F37254" }
+        theme: { color: "#F37254" },
+        methods: {
+          netbanking: true,
+          card: true,
+          upi: true,
+          wallet: true,
+        },
       };
 
       const rzp = new window.Razorpay(options);

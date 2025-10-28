@@ -262,9 +262,16 @@ const PlaceOrder = () => {
               headers: { Authorization: `Bearer ${token}` }
             });
 
+            console.log({
+              razorpay_order_id,
+              razorpay_payment_id,
+              razorpay_signature
+            });
+
+
             if (verifyRes.data.success) {
               alert("Payment Successful! Order Completed.");
-              //setOrderResponse(verifyRes.data.order);
+              setOrderResponse(verifyRes.data.order);
               navigate("/myorders");
             } else {
               alert("Payment verification failed!");
@@ -301,7 +308,7 @@ const PlaceOrder = () => {
 
   useEffect(() => {
     if (!token) {
-      
+
       navigate('/cart')
     } else if (getTotalCartAmount() === 0) {
       navigate('/cart')

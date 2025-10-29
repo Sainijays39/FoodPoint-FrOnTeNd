@@ -304,12 +304,7 @@ const PlaceOrder = () => {
         },
       };
 
-      console.log("🔍 Razorpay Checkout Debug:");
-      console.log("Key:", import.meta.env.VITE_RAZORPAY_KEY_ID);
-      console.log("Order ID:", razorpayOrderId);
-      console.log("Amount:", amount);
-      console.log("Backend URL:", url);
-
+  
 
       const rzp = new window.Razorpay(options);
       rzp.open();

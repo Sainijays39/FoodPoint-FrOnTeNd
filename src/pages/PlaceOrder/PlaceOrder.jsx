@@ -236,6 +236,13 @@ const PlaceOrder = () => {
         }
         return;
       }
+      console.log("🟢 Sending Order Payload:", {
+        amount,
+        items,
+        address,
+        userLocation,
+        paymentMethod
+      });
 
       const res = await axios.post(`${url}/api/order/create-order`, orderPayload, {
         headers: {

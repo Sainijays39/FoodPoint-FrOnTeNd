@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom' // 🆕 CHANGED
+import { useNavigate, useLocation } from 'react-router-dom'
 import './PlaceOrder.css'
 import './../../main.css'
 import { assets } from '../../assets/assets'
@@ -13,7 +13,7 @@ const PlaceOrder = () => {
   if (!Token) return alert("Please login first!");
 
   const decoded = jwtDecode(Token);
-  const userId = decoded.id || decoded.userId || decoded._id; // depends on backend token payload
+  const userId = decoded.id || decoded.userId || decoded._id;
   const user = { _id: userId };
 
   const { getTotalCartAmount, token, food_list, cartItems, url } = useContext(StoreContext);
@@ -253,11 +253,11 @@ const PlaceOrder = () => {
         description: "Order Payment",
         order_id: razorpayOrderId,
         handler: async function (res) {
-           console.log({
-              razorpay_order_id: res.razorpay_order_id,
-              razorpay_payment_id: res.razorpay_payment_id,
-              razorpay_signature: res.razorpay_signature
-            });
+          console.log({
+            razorpay_order_id: res.razorpay_order_id,
+            razorpay_payment_id: res.razorpay_payment_id,
+            razorpay_signature: res.razorpay_signature
+          });
 
           try {
             const verifyRes = await axios.post(`${url}/api/order/verify-payment`, {
@@ -268,7 +268,7 @@ const PlaceOrder = () => {
               headers: { Authorization: `Bearer ${token}` }
             });
 
-           
+
 
             if (verifyRes.data.success) {
               alert("Payment Successful! Order Completed.");
@@ -296,6 +296,13 @@ const PlaceOrder = () => {
           wallet: true,
         },
       };
+
+      console.log("🔍 Razorpay Checkout Debug:");
+      console.log("Key:", import.meta.env.VITE_RAZORPAY_KEY_ID);
+      console.log("Order ID:", razorpayOrderId);
+      console.log("Amount:", amount);
+      console.log("Backend URL:", url);
+
 
       const rzp = new window.Razorpay(options);
       rzp.open();

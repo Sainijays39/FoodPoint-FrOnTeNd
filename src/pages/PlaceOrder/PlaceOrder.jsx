@@ -27,19 +27,7 @@ const PlaceOrder = () => {
 
 
   const navigate = useNavigate();
-  const location = useLocation(); // 🆕 CHANGED (to receive data from Cart)
-  const { state } = location;
-  const cartData = state?.cartItems || [];
-  const baseAmount = state?.totalAmount || getTotalCartAmount();
-
-  // 🆕 CHANGED - delivery calculation states
-  const [distance, setDistance] = useState(0);
-  const [deliveryCharge, setDeliveryCharge] = useState(0);
-  const [deliveryError, setDeliveryError] = useState("");
-
-  // café’s coordinates
-  const CAFE_LAT = 28.242399;
-  const CAFE_LON = 75.076113;
+  
 
   const [data, setData] = useState({
     firstName: "",
@@ -109,23 +97,7 @@ const PlaceOrder = () => {
     return () => clearInterval(interval);
   }, [canOrder]);
 
-  // 🆕 CHANGED: Get user’s current location & compute delivery distance
   useEffect(() => {
-    const calculateDistance = (lat1, lon1, lat2, lon2) => {
-      const toRad = (value) => (value * Math.PI) / 180;
-      const R = 6371; // radius of Earth in km
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRad(lat1)) *
-        Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    };
-
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -133,53 +105,42 @@ const PlaceOrder = () => {
           const userLon = pos.coords.longitude;
           setUserLat(userLat);
           setUserLon(userLon);
-          const dist = calculateDistance(CAFE_LAT, CAFE_LON, userLat, userLon);
-          setDistance(dist);
-
-          if (dist > 10) {
-            setDeliveryError("❌ Sorry, delivery is not available in your location (beyond 10 km).");
-            setCanOrder(false);
-          } else if (dist > 5) {
-            setDeliveryCharge((dist - 5) * 15); // ₹15 per km after 5 km
-          } else {
-            setDeliveryCharge(0);
-          }
         },
         (err) => {
           console.error("Location access denied:", err);
-          setDeliveryError("Unable to access your location. Please enable GPS to continue.");
+          alert("Please enable GPS to place an order.");
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
-      setDeliveryError("Geolocation not supported by your browser.");
+      alert("Geolocation not supported by your browser.");
     }
   }, []);
 
-  // 🆕 CHANGED - adjusted total with delivery
-  const finalAmount = baseAmount + deliveryCharge;
+
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-
-    if (!distance || deliveryError) {
-      return alert("📍 Please enable location access to proceed with your order.");
-    }
-
-
-    if (distance > 10) {
-      return alert("Delivery not available beyond 10 km radius!");
-    }
 
     if (!isWithinOrderTime()) {
       return alert("⏰ Orders can only be placed between 10:00 AM and 10:00 PM.");
     }
 
     if (cartItems.length === 0) return alert("Your cart is empty!");
+    
+      if (!getTotalCartAmount() || getTotalCartAmount() === 0) {
+      alert("Your cart is empty!");
+      return;
+    }
+
+    if (!userLat || !userLon) {
+      alert("Unable to get your location. Please enable GPS.");
+      return;
+    }
 
     const orderPayload = {
       userId: user._id,           // REQUIRED
-      items: cartData.length ? cartData : Object.entries(cartItems)
+      items:Object.entries(cartItems)
         .filter(([cartKey, qty]) => {
           if (!qty || qty <= 0) return false;
           const [id, size] = (cartKey || "").split("_");
@@ -199,11 +160,9 @@ const PlaceOrder = () => {
             price: selectedPrice,
           };
         }),
-      amount: finalAmount,          // must be number
-      deliveryCharge: deliveryCharge || 0,
-      distance: distance || 0,
+      amount: getTotalCartAmount(),          // must be number
       address: {
-        name: data.firstName + " " + data.lastName,
+        name: `${data.firstName} ${data.lastName}`,
         street: data.street,
         city: data.city,
         state: data.state,
@@ -215,9 +174,10 @@ const PlaceOrder = () => {
         longitude: userLon,
       },
       payment: false,
-      paymentMethod: "COD"
+      paymentMethod: paymentMethod === "online" ? "Online" : "COD",
     };
 
+      console.log("📦 Order Payload:", orderPayload);
 
     try {
       setLoading(true);
@@ -235,8 +195,7 @@ const PlaceOrder = () => {
           navigate("/myorders");
         }
         return;
-      }
-    
+      } else{
 
       const res = await axios.post(`${url}/api/order/create-order`, orderPayload, {
         headers: {
@@ -302,6 +261,8 @@ const PlaceOrder = () => {
 
       const rzp = new window.Razorpay(options);
       rzp.open();
+      }
+
     } catch (err) {
       console.error(err);
       alert("Failed to place order.");
@@ -345,26 +306,20 @@ const PlaceOrder = () => {
           <div>
             <div className="cart-total-details">
               <p>Subtotal</p>
-              <p>₹{baseAmount}</p>
+              <p>₹{getTotalCartAmount()}</p>
             </div>
             <hr />
             <div className="cart-total-details">
               <p>Delivery Charges</p>
-              <p>₹{deliveryCharge.toFixed(2)}</p>
+              <p>₹0.00</p>
             </div>
             <hr />
             <div className="cart-total-details">
               <p>Total</p>
-              <p>₹{finalAmount.toFixed(2)}</p>
+              <p>₹{getTotalCartAmount().toFixed(2)}</p>
             </div>
           </div>
-          {distance > 0 && (
-            <p style={{ fontSize: "14px", color: "gray" }}>
-              📍 Distance from café: {distance.toFixed(2)} km
-            </p>
-          )}
-          {deliveryError && <p style={{ color: "red" }}>{deliveryError}</p>}
-
+          
           <hr />
           <div className="payment-method">
             <h4>Payment Method</h4>
@@ -378,7 +333,7 @@ const PlaceOrder = () => {
             </label>
           </div>
 
-          <button type='submit' disabled={loading || !distance || deliveryError || !canOrder}>
+          <button type='submit' disabled={loading || !canOrder}>
             {loading
               ? "Placing Order..."
               : !canOrder

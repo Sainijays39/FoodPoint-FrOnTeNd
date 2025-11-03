@@ -358,7 +358,7 @@ const PlaceOrder = () => {
           </button>
 
           {!canOrder && <p style={{ color: "red", marginTop: "10px" }}>
-            Orders are closed. ⏰ Will open Soon!
+            Orders are closed. ⏰ Will open at 10:00 AM ({timeLeft} left)
           </p>}
           {canOrder && <p style={{ color: "green", marginTop: "10px" }}>
             Orders are open! Closing in: {timeLeft}

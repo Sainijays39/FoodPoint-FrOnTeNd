@@ -24,10 +24,12 @@ const PlaceOrder = () => {
   const [paymentMethod, setPaymentMethod] = useState("online");
   const [userLat, setUserLat] = useState(null);
   const [userLon, setUserLon] = useState(null);
+  const [DeliveryCharge, setDeliveryCharge] = useState(0);
+  const [Distance, setDistance] = useState(0);
 
 
   const navigate = useNavigate();
-  
+
 
   const [data, setData] = useState({
     firstName: "",
@@ -127,8 +129,8 @@ const PlaceOrder = () => {
     }
 
     if (cartItems.length === 0) return alert("Your cart is empty!");
-    
-      if (!getTotalCartAmount() || getTotalCartAmount() === 0) {
+
+    if (!getTotalCartAmount() || getTotalCartAmount() === 0) {
       alert("Your cart is empty!");
       return;
     }
@@ -140,7 +142,7 @@ const PlaceOrder = () => {
 
     const orderPayload = {
       userId: user._id,           // REQUIRED
-      items:Object.entries(cartItems)
+      items: Object.entries(cartItems)
         .filter(([cartKey, qty]) => {
           if (!qty || qty <= 0) return false;
           const [id, size] = (cartKey || "").split("_");
@@ -177,10 +179,14 @@ const PlaceOrder = () => {
       paymentMethod: paymentMethod === "online" ? "Online" : "COD",
     };
 
-      console.log("📦 Order Payload:", orderPayload);
+    console.log("📦 Order Payload:", orderPayload);
 
     try {
       setLoading(true);
+
+      const { razorpayOrderId, amount, deliveryCharge, distance } = res.data;
+      setDeliveryCharge(deliveryCharge);
+      setDistance(distance);
 
       if (paymentMethod === "cod") {
 
@@ -191,76 +197,80 @@ const PlaceOrder = () => {
           }
         });
         if (res.data.success) {
+          const { deliveryCharge, distance } = res.data;
+          setDeliveryCharge(deliveryCharge || 0);
+          setDistance(distance || 0);
+
           alert("Order placed successfully (Cash on Delivery)");
           navigate("/myorders");
         }
         return;
-      } else{
+      } else {
 
-      const res = await axios.post(`${url}/api/order/create-order`, orderPayload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        }
-      });
+        const res = await axios.post(`${url}/api/order/create-order`, orderPayload, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        });
 
-      const { razorpayOrderId, amount } = res.data;
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount,
-        currency: "INR",
-        name: "Food Point",
-        description: "Order Payment",
-        order_id: razorpayOrderId,
-        handler: async function (res) {
-          console.log({
-            razorpay_order_id: res.razorpay_order_id,
-            razorpay_payment_id: res.razorpay_payment_id,
-            razorpay_signature: res.razorpay_signature
-          });
-
-          try {
-            const verifyRes = await axios.post(`${url}/api/order/verify-payment`, {
+        const { razorpayOrderId, amount } = res.data;
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          amount,
+          currency: "INR",
+          name: "Food Point",
+          description: "Order Payment",
+          order_id: razorpayOrderId,
+          handler: async function (res) {
+            console.log({
               razorpay_order_id: res.razorpay_order_id,
               razorpay_payment_id: res.razorpay_payment_id,
               razorpay_signature: res.razorpay_signature
-            }, {
-              headers: { Authorization: `Bearer ${token}` }
             });
 
+            try {
+              const verifyRes = await axios.post(`${url}/api/order/verify-payment`, {
+                razorpay_order_id: res.razorpay_order_id,
+                razorpay_payment_id: res.razorpay_payment_id,
+                razorpay_signature: res.razorpay_signature
+              }, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
 
 
-            if (verifyRes.data.success) {
-              alert("Payment Successful! Order Completed.");
-              setOrderResponse(verifyRes.data.order);
-              navigate("/myorders");
-            } else {
-              alert("Payment verification failed!");
-              navigate("/");
+
+              if (verifyRes.data.success) {
+                alert("Payment Successful! Order Completed.");
+                setOrderResponse(verifyRes.data.order);
+                navigate("/myorders");
+              } else {
+                alert("Payment verification failed!");
+                navigate("/");
+              }
+            } catch (err) {
+              console.error(err);
+              alert("Error verifying payment.");
             }
-          } catch (err) {
-            console.error(err);
-            alert("Error verifying payment.");
-          }
-        },
-        prefill: {
-          name: `${data.firstName} ${data.lastName}` || "Test User",
-          email: data.email || "test@example.com",
-          contact: data.phone || "9999999999"
-        },
-        theme: { color: "#F37254" },
-        method: {
-          netbanking: true,
-          card: true,
-          upi: true,
-          wallet: true,
-        },
-      };
+          },
+          prefill: {
+            name: `${data.firstName} ${data.lastName}` || "Test User",
+            email: data.email || "test@example.com",
+            contact: data.phone || "9999999999"
+          },
+          theme: { color: "#F37254" },
+          method: {
+            netbanking: true,
+            card: true,
+            upi: true,
+            wallet: true,
+          },
+        };
 
-  
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
       }
 
     } catch (err) {
@@ -311,15 +321,21 @@ const PlaceOrder = () => {
             <hr />
             <div className="cart-total-details">
               <p>Delivery Charges</p>
-              <p>₹0.00</p>
+              <p>₹{DeliveryCharge?.toFixed(2) || 0}</p>
             </div>
             <hr />
             <div className="cart-total-details">
               <p>Total</p>
-              <p>₹{getTotalCartAmount().toFixed(2)}</p>
+              <p>₹{(getTotalCartAmount() + (DeliveryCharge || 0)).toFixed(2)}</p>
             </div>
+
+            {Distance > 0 && (
+              <p style={{ fontSize: "14px", color: "gray" }}>
+                📍  Distance from café: {Distance.toFixed(2)} km
+              </p>
+            )}
           </div>
-          
+
           <hr />
           <div className="payment-method">
             <h4>Payment Method</h4>

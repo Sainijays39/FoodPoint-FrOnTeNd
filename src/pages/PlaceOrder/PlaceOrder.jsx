@@ -7,6 +7,8 @@ import { StoreContext } from '../../context/StoreContext'
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
 
+
+
 const PlaceOrder = () => {
 
   const Token = localStorage.getItem("token");
@@ -99,30 +101,67 @@ const PlaceOrder = () => {
     return () => clearInterval(interval);
   }, [canOrder]);
 
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const userLat = pos.coords.latitude;
-          const userLon = pos.coords.longitude;
-          setUserLat(userLat);
-          setUserLon(userLon);
-        },
-        (err) => {
-          console.error("Location access denied:", err);
-          alert("Please enable GPS to place an order.");
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    } else {
-      alert("Geolocation not supported by your browser.");
-    }
-  }, []);
+ useEffect(() => {
+  const CAFE_LAT = import.meta.env.VITE_CAFE_LAT; 
+  const CAFE_LON = import.meta.env.VITE_CAFE_LON; 
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) *
+      Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        setUserLat(lat);
+        setUserLon(lon);
+
+        // calculate distance and delivery charge
+        const distance = calculateDistance(CAFE_LAT, CAFE_LON, lat, lon);
+        setDistance(distance);
+
+        let charge = 0;
+        if (distance > 10) { 
+          setCanOrder(false);
+          alert("Sorry, delivery not available beyond 10 km.");
+         
+        } else if (distance > 5) {
+          setCanOrder(true);
+          charge = (distance - 5) * 15;
+        }
+        setDeliveryCharge(charge);
+        
+      },
+      (err) => {
+        console.error("Location access denied:", err);
+        alert("Please enable GPS to place an order.");
+        setCanOrder(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  } else {
+    alert("Geolocation not supported by your browser.");
+    setCanOrder(false);
+  }
+}, []);
 
 
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
+    if (!canOrder) {
+      return alert("❌ Orders are currently closed. Please try again later.");
+    }
 
     if (!isWithinOrderTime()) {
       return alert("⏰ Orders can only be placed between 10:00 AM and 10:00 PM.");
@@ -171,22 +210,14 @@ const PlaceOrder = () => {
         zipcode: data.zipcode,
         phone: data.phone
       },
-      userLocation: {
-        latitude: userLat,
-        longitude: userLon,
-      },
       payment: false,
       paymentMethod: paymentMethod === "online" ? "Online" : "COD",
     };
 
-    console.log("📦 Order Payload:", orderPayload);
-
     try {
       setLoading(true);
 
-      const { razorpayOrderId, amount, deliveryCharge, distance } = res.data;
-      setDeliveryCharge(deliveryCharge);
-      setDistance(distance);
+    
 
       if (paymentMethod === "cod") {
 
@@ -197,10 +228,6 @@ const PlaceOrder = () => {
           }
         });
         if (res.data.success) {
-          const { deliveryCharge, distance } = res.data;
-          setDeliveryCharge(deliveryCharge || 0);
-          setDistance(distance || 0);
-
           alert("Order placed successfully (Cash on Delivery)");
           navigate("/myorders");
         }
@@ -328,7 +355,7 @@ const PlaceOrder = () => {
               <p>Total</p>
               <p>₹{(getTotalCartAmount() + (DeliveryCharge || 0)).toFixed(2)}</p>
             </div>
-
+              <hr />
             {Distance > 0 && (
               <p style={{ fontSize: "14px", color: "gray" }}>
                 📍  Distance from café: {Distance.toFixed(2)} km
@@ -336,7 +363,7 @@ const PlaceOrder = () => {
             )}
           </div>
 
-          <hr />
+        
           <div className="payment-method">
             <h4>Payment Method</h4>
             <label>
@@ -348,8 +375,16 @@ const PlaceOrder = () => {
               Cash on Delivery
             </label>
           </div>
+          { (Distance > 10) ? (
+            <div className="divider">
+              <h1 style={{ color: "red", marginTop: "10px" }}>Delivery is not available at your location. Delivery available only within 10 km</h1>
+            </div>) : null}
+          <hr />
 
-          <button type='submit' disabled={loading || !canOrder}>
+          <button type='submit' disabled={loading || !canOrder}   style={{
+          opacity: loading || !canOrder ? 0.6 : 1,
+          cursor: loading || !canOrder ? "not-allowed" : "pointer",
+        }}>
             {loading
               ? "Placing Order..."
               : !canOrder

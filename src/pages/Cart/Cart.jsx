@@ -2,10 +2,19 @@ import React, { useContext } from 'react';
 import './Cart.css';
 import './../../main.css';
 import { StoreContext } from '../../context/StoreContext';
-import { Link } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 const Cart = () => {
-  const { cartItems, food_list, removeFromCart, getTotalCartAmount, url } = useContext(StoreContext);
+  const { cartItems, food_list, removeFromCart, getTotalCartAmount, url,token } = useContext(StoreContext);
+  const navigate = useNavigate();
+  const handleCheckout = () => {
+    if (!token) {
+      alert("Please login to proceed to checkout.");
+      navigate("/login");
+    } else {
+      navigate("/placeorder");
+    }
+  };
 
   return (
     <div className='cart'>
@@ -71,7 +80,7 @@ const Cart = () => {
               <p>₹{getTotalCartAmount()}</p>
             </div>
           </div>
-          <Link to='/placeorder'><button>PROCEED TO CHECKOUT</button></Link>
+          <button onClick={handleCheckout}>PROCEED TO CHECKOUT</button>
         </div>
 
         <div className="cart-promocode">

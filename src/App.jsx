@@ -12,29 +12,30 @@ import TermsOfService from './pages/TermAndServices/TermAndServices'
 import CancellationRefund from './pages/Cancelation/Cancelation'
 import PlaceOrder from './pages/PlaceOrder/PlaceOrder'
 import Testimony from './Components/Testimony/Testimony'
-import LoginPopup from './Components/LoginPopUP/LoginPopUp'
+import Login from './pages/Login/Login'
 import MyOrders from "./pages/MyOrders/MyOrders";
-
+import ResetPassword from './pages/ResetPassword/ResetPassword'
+import ForgotPassword from './pages/ForgetPassword/ForgotPassword'
 
 
 
 const App = () => {
-   
-  const[showLogin, setShowLogin] = useState(false);
   
   return (
     <>    
-    {showLogin?<LoginPopup setShowLogin = {setShowLogin} />:<></>}
       <div className='app '>
-        <Navbar setShowLogin = {setShowLogin} />
+        <Navbar />
         <Routes>
           <Route path='/' element={ <><Home  /> <Testimony /> <AppDownload /> </>} />
           <Route path='/cart' element={<Cart />} />
+          <Route path='/login' element={<Login />} />
           <Route path='/placeorder' element={<PlaceOrder />} />
           <Route path='/myorders' element={<MyOrders />} />
           <Route path='/privacypolicy' element={<PrivacyPolicy />} />
           <Route path='/terms' element={<TermsOfService />} />
           <Route path="/CancellationRefund" element={<CancellationRefund />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Routes> 
        
        <footer className="footer"><Footer /> </footer> 

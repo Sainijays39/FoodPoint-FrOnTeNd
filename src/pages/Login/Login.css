@@ -1,0 +1,143 @@
+.loginpage-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  
+   /* 🎨 Background Image */
+  background-image: url("../../assets/header_img.png"); /* <-- Update path as needed */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  /* Overlay for better readability */
+  background-color: rgba(0, 0, 0, 0.4);
+  background-blend-mode: darken;
+
+
+  padding: 40px 0;
+}
+
+.loginpage-card {
+  width: 400px;
+  background-color: antiquewhite;
+  padding: 35px 40px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loginpage-title {
+  font-size: 28px;
+  font-weight: bold;
+  text-transform: uppercase;
+  text-align: center;
+  color: #ff6b3d;
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+}
+
+.login-subtitle {
+  text-align: center;
+  color: #333;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.login-desc {
+  text-align: center;
+  color: #555;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.loginpage-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.loginpage-inputs input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  outline: none;
+  font-size: 14px;
+}
+
+.login-btn {
+  background-color: tomato;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.login-btn:hover {
+  background-color: #ff7043;
+}
+
+.forgot-btn {
+  background-color: tomato;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+
+}
+
+.forgot-btn:hover {
+  background-color: #ff7043;
+}
+
+.login-conditions {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.link a {
+  color: tomato;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.link a:hover {
+  text-decoration: underline;
+}
+
+.toggle-link {
+  text-align: center;
+  font-size: 14px;
+}
+
+.toggle-link span {
+ background-color: tomato;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+
+} 
+.toggle-link span:hover {
+    background-color: #ff7043;    
+}
+
+footer {
+  position: relative;
+  bottom: 0;
+  width: 100%;
+}

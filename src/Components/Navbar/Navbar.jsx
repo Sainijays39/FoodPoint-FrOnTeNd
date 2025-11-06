@@ -7,7 +7,7 @@ import { StoreContext } from '../../context/StoreContext'
 import { Profiler } from 'react'
 
 
-const Navbar = ({setShowLogin}) => {
+const Navbar = () => {
    
     const [menu, setMenu ] =  useState("menu");
 
@@ -48,7 +48,7 @@ const Navbar = ({setShowLogin}) => {
                 <Link to='/Cart'><img src={assets.basket_icon} alt="" /></Link>
                 <div className={getTotalCartAmount()?"dot":""}></div>
             </div>
-           { !token?<button onClick={()=>setShowLogin(true)}>Sign In</button>
+           { !token?<button onClick={() => navigate("/login")}>Sign In</button>
            : <div className="navbar-profile">
                 <img src={assets.profile_icon} alt="" />
                 <ul className="navbar-profile-menu">

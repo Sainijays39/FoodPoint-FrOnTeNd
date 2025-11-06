@@ -217,7 +217,8 @@ const PlaceOrder = () => {
     try {
       setLoading(true);
 
-    
+       console.log("Order Payload:", orderPayload);
+
 
       if (paymentMethod === "cod") {
 

@@ -251,11 +251,6 @@ const PlaceOrder = () => {
           description: "Order Payment",
           order_id: razorpayOrderId,
           handler: async function (res) {
-            console.log({
-              razorpay_order_id: res.razorpay_order_id,
-              razorpay_payment_id: res.razorpay_payment_id,
-              razorpay_signature: res.razorpay_signature
-            });
 
             try {
               const verifyRes = await axios.post(`${url}/api/order/verify-payment`, {

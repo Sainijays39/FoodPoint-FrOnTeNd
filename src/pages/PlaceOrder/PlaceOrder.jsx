@@ -6,7 +6,8 @@ import { assets } from '../../assets/assets'
 import { StoreContext } from '../../context/StoreContext'
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
-
+import { Capacitor } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
 
 
 const PlaceOrder = () => {
@@ -101,9 +102,11 @@ const PlaceOrder = () => {
     return () => clearInterval(interval);
   }, [canOrder]);
 
- useEffect(() => {
-  const CAFE_LAT = import.meta.env.VITE_CAFE_LAT; 
-  const CAFE_LON = import.meta.env.VITE_CAFE_LON; 
+
+
+useEffect(() => {
+  const CAFE_LAT = import.meta.env.VITE_CAFE_LAT;
+  const CAFE_LON = import.meta.env.VITE_CAFE_LON;
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // km
@@ -113,47 +116,75 @@ const PlaceOrder = () => {
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(lat1 * Math.PI / 180) *
       Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        setUserLat(lat);
-        setUserLon(lon);
+  const getUserLocation = async () => {
+    try {
+      let lat, lon;
 
-        // calculate distance and delivery charge
-        const distance = calculateDistance(CAFE_LAT, CAFE_LON, lat, lon);
-        setDistance(distance);
-
-        let charge = 0;
-        if (distance > 10) { 
+      if (Capacitor.getPlatform() === "web") {
+        // 🌐 Website mode
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              lat = pos.coords.latitude;
+              lon = pos.coords.longitude;
+              handleLocation(lat, lon);
+            },
+            (err) => {
+              console.error("Web geolocation error:", err);
+              alert("Please enable location access to place an order.");
+              setCanOrder(false);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+          );
+        } else {
+          alert("Geolocation not supported by your browser.");
           setCanOrder(false);
-          alert("Sorry, delivery not available beyond 10 km.");
-         
-        } else if (distance > 5) {
-          setCanOrder(true);
-          charge = (distance - 5) * 15;
         }
-        setDeliveryCharge(charge);
-        
-      },
-      (err) => {
-        console.error("Location access denied:", err);
-        alert("Please enable GPS to place an order.");
-        setCanOrder(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  } else {
-    alert("Geolocation not supported by your browser.");
-    setCanOrder(false);
-  }
+      } else {
+        // 📱 Android app mode (Capacitor)
+        await Geolocation.requestPermissions();
+        const pos = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+        });
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+        handleLocation(lat, lon);
+      }
+
+    } catch (err) {
+      console.error("Location error:", err);
+      alert("Please enable GPS or grant location permission.");
+      setCanOrder(false);
+    }
+  };
+
+  const handleLocation = (lat, lon) => {
+    setUserLat(lat);
+    setUserLon(lon);
+
+    const distance = calculateDistance(CAFE_LAT, CAFE_LON, lat, lon);
+    setDistance(distance);
+
+    let charge = 0;
+    if (distance > 10) {
+      setCanOrder(false);
+      alert("Sorry, delivery not available beyond 10 km.");
+    } else if (distance > 5) {
+      setCanOrder(true);
+      charge = (distance - 5) * 15;
+    }
+    setDeliveryCharge(charge);
+  };
+
+  getUserLocation();
 }, []);
+
 
 
 

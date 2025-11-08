@@ -104,86 +104,86 @@ const PlaceOrder = () => {
 
 
 
-useEffect(() => {
-  const CAFE_LAT = import.meta.env.VITE_CAFE_LAT;
-  const CAFE_LON = import.meta.env.VITE_CAFE_LON;
+  useEffect(() => {
+    const CAFE_LAT = import.meta.env.VITE_CAFE_LAT;
+    const CAFE_LON = import.meta.env.VITE_CAFE_LON;
 
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) *
-      Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+      const R = 6371; // km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    };
 
-  const getUserLocation = async () => {
-    try {
-      let lat, lon;
+    const getUserLocation = async () => {
+      try {
+        let lat, lon;
 
-      if (Capacitor.getPlatform() === "web") {
-        // 🌐 Website mode
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              lat = pos.coords.latitude;
-              lon = pos.coords.longitude;
-              handleLocation(lat, lon);
-            },
-            (err) => {
-              console.error("Web geolocation error:", err);
-              alert("Please enable location access to place an order.");
-              setCanOrder(false);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-          );
+        if (Capacitor.getPlatform() === "web") {
+          // 🌐 Website mode
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                lat = pos.coords.latitude;
+                lon = pos.coords.longitude;
+                handleLocation(lat, lon);
+              },
+              (err) => {
+                console.error("Web geolocation error:", err);
+                alert("Please enable location access to place an order.");
+                setCanOrder(false);
+              },
+              { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+          } else {
+            alert("Geolocation not supported by your browser.");
+            setCanOrder(false);
+          }
         } else {
-          alert("Geolocation not supported by your browser.");
-          setCanOrder(false);
+          // 📱 Android app mode (Capacitor)
+          await Geolocation.requestPermissions();
+          const pos = await Geolocation.getCurrentPosition({
+            enableHighAccuracy: true,
+          });
+          lat = pos.coords.latitude;
+          lon = pos.coords.longitude;
+          handleLocation(lat, lon);
         }
-      } else {
-        // 📱 Android app mode (Capacitor)
-        await Geolocation.requestPermissions();
-        const pos = await Geolocation.getCurrentPosition({
-          enableHighAccuracy: true,
-        });
-        lat = pos.coords.latitude;
-        lon = pos.coords.longitude;
-        handleLocation(lat, lon);
+
+      } catch (err) {
+        console.error("Location error:", err);
+        alert("Please enable GPS or grant location permission.");
+        setCanOrder(false);
       }
+    };
 
-    } catch (err) {
-      console.error("Location error:", err);
-      alert("Please enable GPS or grant location permission.");
-      setCanOrder(false);
-    }
-  };
+    const handleLocation = (lat, lon) => {
+      setUserLat(lat);
+      setUserLon(lon);
 
-  const handleLocation = (lat, lon) => {
-    setUserLat(lat);
-    setUserLon(lon);
+      const distance = calculateDistance(CAFE_LAT, CAFE_LON, lat, lon);
+      setDistance(distance);
 
-    const distance = calculateDistance(CAFE_LAT, CAFE_LON, lat, lon);
-    setDistance(distance);
+      let charge = 0;
+      if (distance > 10) {
+        setCanOrder(false);
+        alert("Sorry, delivery not available beyond 10 km.");
+      } else if (distance > 5) {
+        setCanOrder(true);
+        charge = (distance - 5) * 15;
+      }
+      setDeliveryCharge(charge);
+    };
 
-    let charge = 0;
-    if (distance > 10) {
-      setCanOrder(false);
-      alert("Sorry, delivery not available beyond 10 km.");
-    } else if (distance > 5) {
-      setCanOrder(true);
-      charge = (distance - 5) * 15;
-    }
-    setDeliveryCharge(charge);
-  };
-
-  getUserLocation();
-}, []);
+    getUserLocation();
+  }, []);
 
 
 
@@ -248,7 +248,7 @@ useEffect(() => {
     try {
       setLoading(true);
 
-       console.log("Order Payload:", orderPayload);
+      console.log("Order Payload:", orderPayload);
 
 
       if (paymentMethod === "cod") {
@@ -314,11 +314,14 @@ useEffect(() => {
           },
           theme: { color: "#F37254" },
           method: {
-            netbanking: true,
+            netbanking: false,
             card: true,
             upi: true,
-            wallet: true,
+            wallet: false,
           },
+          upi: {
+            flow: "intent" // Add this line to open UPI apps directly
+          }
         };
 
 
@@ -382,7 +385,7 @@ useEffect(() => {
               <p>Total</p>
               <p>₹{(getTotalCartAmount() + (DeliveryCharge || 0)).toFixed(2)}</p>
             </div>
-              <hr />
+            <hr />
             {Distance > 0 && (
               <p style={{ fontSize: "14px", color: "gray" }}>
                 📍  Distance from café: {Distance.toFixed(2)} km
@@ -390,7 +393,7 @@ useEffect(() => {
             )}
           </div>
 
-        
+
           <div className="payment-method">
             <h4>Payment Method</h4>
             <label>
@@ -402,16 +405,16 @@ useEffect(() => {
               Cash on Delivery
             </label>
           </div>
-          { (Distance > 10) ? (
+          {(Distance > 10) ? (
             <div className="divider">
               <h1 style={{ color: "red", marginTop: "10px" }}>Delivery is not available at your location. Delivery available only within 10 km</h1>
             </div>) : null}
           <hr />
 
-          <button type='submit' disabled={loading || !canOrder}   style={{
-          opacity: loading || !canOrder ? 0.6 : 1,
-          cursor: loading || !canOrder ? "not-allowed" : "pointer",
-        }}>
+          <button type='submit' disabled={loading || !canOrder} style={{
+            opacity: loading || !canOrder ? 0.6 : 1,
+            cursor: loading || !canOrder ? "not-allowed" : "pointer",
+          }}>
             {loading
               ? "Placing Order..."
               : !canOrder

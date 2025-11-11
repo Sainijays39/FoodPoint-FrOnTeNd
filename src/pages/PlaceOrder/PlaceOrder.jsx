@@ -314,15 +314,21 @@ const PlaceOrder = () => {
             contact: data.phone || "9999999999"
           },
           theme: { color: "#F37254" },
-          // 🟢 Enable UPI Native Intent Flow
-          method: {
-            upi: true,
-            netbanking: false,
-            card: false,
-            wallet: false,
-          },
-          upi: {
-            intent_flow: true, // 👈 this is the key line
+          config: {
+            display: {
+              blocks: {
+                upi: {
+                  name: "Pay via UPI",
+                  instruments: [
+                    { method: "upi", apps: ["google_pay", "phonepe", "paytm", "bhim"] }
+                  ]
+                }
+              },
+              sequence: ["upi"],
+              preferences: {
+                show_default_blocks: false
+              }
+            }
           },
         }
         const rzp = new window.Razorpay(options);

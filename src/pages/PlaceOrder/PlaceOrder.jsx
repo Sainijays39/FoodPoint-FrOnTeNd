@@ -328,9 +328,6 @@ const PlaceOrder = () => {
               sequence: ["upi"],
               preferences: { show_default_blocks: false }
             }
-          },
-          handler: function (response) {
-            console.log("Payment Success:", response);
           }
         };
         const rzp = new window.Razorpay(options);

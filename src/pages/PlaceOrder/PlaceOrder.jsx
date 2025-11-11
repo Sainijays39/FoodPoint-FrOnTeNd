@@ -317,6 +317,9 @@ const PlaceOrder = () => {
           // 🟢 Enable UPI Native Intent Flow
           method: {
             upi: true,
+            netbanking: false,
+            card: false,
+            wallet: false,
           },
           upi: {
             intent_flow: true, // 👈 this is the key line

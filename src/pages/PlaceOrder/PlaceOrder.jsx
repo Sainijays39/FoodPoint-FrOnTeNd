@@ -313,21 +313,12 @@ const PlaceOrder = () => {
             contact: data.phone || "9999999999"
           },
           theme: { color: "#F37254" },
-          method: {
-            netbanking: false,
-            card: true,
-            upi: true,
-            wallet: false,
-          },
-          upi: {
-            flow: "intent" // Add this line to open UPI apps directly
-          }
+         
         };
 
 
 
-        const rzp = new window.Razorpay(options);
-        rzp.open();
+      RazorpayCheckout.open(options);
       }
 
     } catch (err) {
@@ -398,7 +389,7 @@ const PlaceOrder = () => {
             <h4>Payment Method</h4>
             <label>
               <input type="radio" value="online" checked={paymentMethod === "online"} onChange={() => setPaymentMethod("online")} />
-              Online Payment (Razorpay)
+              Online Payment
             </label>
             <label>
               <input type="radio" value="cod" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} />

@@ -211,7 +211,6 @@ const PlaceOrder = () => {
     }
 
     const orderPayload = {
-      userId: user._id,           // REQUIRED
       items: Object.entries(cartItems)
         .filter(([cartKey, qty]) => {
           if (!qty || qty <= 0) return false;

@@ -10,6 +10,7 @@ import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
 
 
+
 const PlaceOrder = () => {
 
   const Token = localStorage.getItem("token");
@@ -313,12 +314,27 @@ const PlaceOrder = () => {
             contact: data.phone || "9999999999"
           },
           theme: { color: "#F37254" },
-         
+          method: 'upi',
+          config: {
+            display: {
+              blocks: {
+                upi: {
+                  name: "Pay via UPI",
+                  instruments: [
+                    { method: "upi", apps: ["google_pay", "phonepe", "paytm"] }
+                  ]
+                }
+              },
+              sequence: ["upi"],
+              preferences: { show_default_blocks: false }
+            }
+          },
+          handler: function (response) {
+            console.log("Payment Success:", response);
+          }
         };
-
-
-
-      RazorpayCheckout.open(options);
+        const rzp = new window.Razorpay(options);
+        rzp.open();
       }
 
     } catch (err) {

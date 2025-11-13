@@ -12,7 +12,9 @@ const ResetPassword = () => {
     try {
       const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/user/reset-password/${token}`, { newPassword: password });
       alert(res.data.message);
-      navigate("/");
+
+      alert("Password reset successful! Please log in with your app.");
+      navigate("/login");
     } catch (err) {
       alert(err.response?.data?.message || "Error resetting password");
     }

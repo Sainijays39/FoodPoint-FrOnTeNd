@@ -4,6 +4,7 @@ import './../../main.css';
 import { StoreContext } from '../../context/StoreContext';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import { preferences } from '@capacitor/preferences';
 
 
 const LoginPage = () => {
@@ -30,6 +31,15 @@ const LoginPage = () => {
       if (response.data.success) {
         setToken(response.data.token);
         localStorage.setItem("token", response.data.token);
+        await preferences.set({ key: 'auth_token', value: response.data.token });
+
+        if (response.data.user) {
+          await preferences.set({
+            key: 'auth_user',
+            value: JSON.stringify(response.data.user)
+          });
+        }
+
         navigate("/");
       } else {
         alert(response.data.message);
@@ -41,10 +51,10 @@ const LoginPage = () => {
   };
 
   return (
-    
-    
+
+
     <div className="loginpage-container">
-      
+
       <form onSubmit={onLogin} className="loginpage-card">
         <h2 className="loginpage-title">{currState}</h2>
 

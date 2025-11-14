@@ -17,7 +17,7 @@ import MyOrders from "./pages/MyOrders/MyOrders";
 import ResetPassword from './pages/ResetPassword/ResetPassword'
 import ForgotPassword from './pages/ForgetPassword/ForgotPassword'
 import { Preferences } from '@capacitor/preferences';
-import { App } from '@capacitor/app';
+import { app } from '@capacitor/app';
 
 
 
@@ -42,7 +42,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    App.addListener('appUrlOpen', (event) => {
+    app.addListener('appUrlOpen', (event) => {
       const url = event.url;
       console.log("App opened with URL:", url);
 

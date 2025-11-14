@@ -4,7 +4,7 @@ import './../../main.css';
 import { StoreContext } from '../../context/StoreContext';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
-import { preferences } from '@capacitor/preferences';
+import { Preferences } from '@capacitor/preferences';
 
 
 const LoginPage = () => {
@@ -31,10 +31,10 @@ const LoginPage = () => {
       if (response.data.success) {
         setToken(response.data.token);
         localStorage.setItem("token", response.data.token);
-        await preferences.set({ key: 'auth_token', value: response.data.token });
+        await Preferences.set({ key: 'auth_token', value: response.data.token });
 
         if (response.data.user) {
-          await preferences.set({
+          await Preferences.set({
             key: 'auth_user',
             value: JSON.stringify(response.data.user)
           });

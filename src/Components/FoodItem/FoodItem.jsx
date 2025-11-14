@@ -36,7 +36,7 @@ const FoodItem = ({ id, name, sizes, price, description, image, category }) => {
   return (
     <div className='food-item'>
       <div className="food-item-img-container">
-        <img src={item.image} alt='' className='food-item-image' />
+        <img src={image} alt='' className='food-item-image' />
         <div className='food-item-action'>
           {!cartItems[cartKey] ? (
             <button
